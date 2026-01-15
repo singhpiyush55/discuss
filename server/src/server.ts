@@ -2,21 +2,45 @@ import { WebSocketServer, WebSocket } from "ws";
 
 const wss = new WebSocketServer({port: 8080});
 
-let allSockets : WebSocket[] = [];
-let userCount = 0;
-wss.on("connection", (socket)=>{
-    allSockets.push(socket);
-    userCount++;
-    console.log("user connected = " +userCount);
+interface User {
+    socket: WebSocket;
+    room: string | number;
+}
+let allSockets : User[] = [];
 
+// {     ==> This is our schema.
+//    "type": "join",
+//    "payload": {
+//      "roomId": "123"
+//    }
+// }
+
+
+wss.on("connection", (socket)=>{
     socket.on("message", (message)=>{
-        console.log("Message received: " +message.toString() + "from user "+userCount);
-        for(let i = 0; i < allSockets.length; i++){
-            const s = allSockets[i];
-            if (!s) continue; // Without this : 's' is possibly 'undefined'.
-            s.send(message.toString());
+        //@ts-ignore
+        const parsedMessage = JSON.parse(message);
+        if(parsedMessage.type === "join"){
+            allSockets.push({
+                socket: socket,
+                room: parsedMessage.payload.roomId
+            })
+        }
+
+        if(parsedMessage.type === "chat"){
+            let currentRoom = null;
+            for(let i = 0; i < allSockets.length; i++){
+                if(allSockets[i]?.socket === socket){
+                    currentRoom = allSockets[i]?.room;
+                    console.log(currentRoom);
+                }
+            }
+
+            for(let i = 0; i < allSockets.length; i++){
+                if(allSockets[i]?.room === currentRoom){
+                    allSockets[i]?.socket.send(parsedMessage.payload.message)
+                }
+            }
         }
     })
-
-    
 })
