@@ -25,6 +25,14 @@ wss.on("connection", (socket)=>{
                 socket: socket,
                 room: parsedMessage.payload.roomId
             })
+
+            socket.send(JSON.stringify({
+                type: "ROOM_JOINED",
+                status: "OK",
+                payload:{
+                    roomId: parsedMessage.payload.roomId
+                }
+            }));
         }
 
         if(parsedMessage.type === "chat"){
