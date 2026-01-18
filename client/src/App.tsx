@@ -6,10 +6,10 @@ import ChatRoom from './ChatRoom';
 import { useState } from 'react';
 
 function App() {
-  const [page, setPage] = useState<"home" | "room" | "chatroom">("home");
+  const [page, setPage] = useState<"home" | "joinroom" | "chatroom">("home");
   const [roomId, setRoomId] = useState<string | number | null>(null);
 
-  const navigate = (pageRec : "home" | "room" | "chatroom", roomIdRec: string): void => {
+  const navigate = (pageRec : "home" | "joinroom" | "chatroom", roomIdRec: string): void => {
     setPage(pageRec);
     setRoomId(roomIdRec);
   }
@@ -17,9 +17,9 @@ function App() {
   return (
     <>
     <LandingPage>
-      {page === "home" && <CreateJoinRoom onClick={navigate}/>}
-      {page === "room" && <JoinRoom onBack={() => setPage("home")}/>}
-      {page === "chatroom" && <ChatRoom roomId={roomId}/>}
+      {page === "home" && <CreateJoinRoom onClickCreate={navigate} onClickJoin={() => {setPage("joinroom")}}/>}
+      {page === "joinroom" && <JoinRoom onBack={() => setPage("home")} onJoin={navigate}/>}
+      {page === "chatroom" && <ChatRoom roomId={roomId} onClickBack={()=>setPage("home")}/>}
     </LandingPage>
     </>
   )
