@@ -13,7 +13,7 @@ function createRoom(
     ws.onopen = () => {
       ws.send(
         JSON.stringify({
-          type: "join",
+          type: "create-join",
           payload: { roomId },
         })
       );

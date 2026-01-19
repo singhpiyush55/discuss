@@ -20,7 +20,8 @@ wss.on("connection", (socket)=>{
     socket.on("message", (message)=>{
         //@ts-ignore
         const parsedMessage = JSON.parse(message);
-        if(parsedMessage.type === "join"){
+
+        if(parsedMessage.type === "create-join"){
             allSockets.push({
                 socket: socket,
                 room: parsedMessage.payload.roomId
@@ -33,6 +34,31 @@ wss.on("connection", (socket)=>{
                     roomId: parsedMessage.payload.roomId
                 }
             }));
+        }
+
+        if(parsedMessage.type === "join"){
+            // get the roomId, look for it in all sockets, if found send ok response and add it into all sockets if not send an not ok response. 
+            let found = false;
+            for(let i = 0; i < allSockets.length; i++){
+                if(allSockets[i]?.room === parsedMessage.payload.roomId){
+                    found = true;
+                    break;
+                }
+            }
+            if(found){
+                socket.send(JSON.stringify({
+                    type: "ROOM_JOINED",
+                    status: "OK",
+                    payload: {
+                        roomId: parsedMessage.payload.roomId
+                    }
+                }))
+            }else{
+                socket.send(JSON.stringify({
+                    type: "ROOM_NOT_JOINED",
+                    status: "NOT_OK"
+                }))
+            }
         }
 
         if(parsedMessage.type === "chat"){

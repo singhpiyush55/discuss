@@ -17,6 +17,38 @@ function handleJoin(
     if(input === ""){
         setPopup("entervalid");
     }
+
+    const ws = new WebSocket("ws://localhost:8080");
+
+    ws.onopen = () => {
+        ws.send(
+            JSON.stringify({
+                type: "join",
+                payload: {
+                    roomId: input
+                }
+            })
+        )
+    };
+
+    ws.onmessage = (message) => {
+        const parsedMessage = JSON.parse(message.data);
+
+        if(
+            parsedMessage.type === "ROOM_JOINED" &&
+            parsedMessage.status === "OK"
+        ){
+            // Means room id is correct and let them join the room. 
+            onJoin("chatroom", input)
+        }
+
+        if(
+            parsedMessage.type === "ROOM_NOT_JOINED" &&
+            parsedMessage.status === "NOT_OK"
+        ){
+            setPopup("noroomexist")
+        }
+    }
 }
 
 
@@ -60,13 +92,15 @@ function None(){
 function EnterValid(){
     return(
         <>
-            <p>Enter a valid room id</p>
+            <p>Enter a room id</p>
         </>
     )
 }
 function NoRoomExist(){
     return(
-        <></>
+        <>
+            <p>No such room exist.</p>
+        </>
     )
 }
 
