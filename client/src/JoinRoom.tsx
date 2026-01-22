@@ -1,10 +1,10 @@
 import { useRef, useState } from "react";
 type Prop = {
     onBack: () => void
-    onJoin: (pageRec : "home" | "joinroom" | "chatroom", roomIdRec: string) => void;
+    onJoin: (pageRec : "home" | "joinroom" | "chatroom", roomIdRec: string, wsType: WebSocket) => void;
 }
 function handleJoin(
-    onJoin: (pageRec : "home" | "joinroom" | "chatroom", roomIdRec: string) => void,
+    onJoin: (pageRec : "home" | "joinroom" | "chatroom", roomIdRec: string, wsType: WebSocket) => void,
     inputRef: React.RefObject<HTMLInputElement | null>,
     setPopup: React.Dispatch<React.SetStateAction<"none" | "entervalid" | "noroomexist">>
 ){
@@ -39,7 +39,7 @@ function handleJoin(
             parsedMessage.status === "OK"
         ){
             // Means room id is correct and let them join the room. 
-            onJoin("chatroom", input)
+            onJoin("chatroom", input, ws)
         }
 
         if(

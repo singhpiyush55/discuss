@@ -1,10 +1,10 @@
 type Prop = {
-    onClickCreate: (page: "home" | "joinroom" | "chatroom", roomId: string) => void;
+    onClickCreate: (page: "home" | "joinroom" | "chatroom", roomId: string, wsType: WebSocket) => void;
     onClickJoin: () => void;
 };
 
 function createRoom(
-  onClickCreate: (page: "home" | "joinroom" | "chatroom", roomId: string) => void
+  onClickCreate: (page: "home" | "joinroom" | "chatroom", roomId: string, wsType: WebSocket) => void
 ) {
   return () => { // ✅ return a function for onClick
     const roomId = Date.now().toString(36);
@@ -29,7 +29,7 @@ function createRoom(
         console.log("Room created:", parsedMessage.payload.roomId);
 
         // ✅ navigate ONLY after success
-        onClickCreate("chatroom", parsedMessage.payload.roomId);
+        onClickCreate("chatroom", parsedMessage.payload.roomId, ws);
       }
     };
   };

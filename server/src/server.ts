@@ -2,18 +2,9 @@ import { WebSocketServer, WebSocket } from "ws";
 
 const wss = new WebSocketServer({port: 8080});
 
-interface User {
-    socket: WebSocket;
-    room: string | number;
-}
-let allSockets : User[] = [];
-
-// {     ==> This is our schema.
-//    "type": "join",
-//    "payload": {
-//      "roomId": "123"
-//    }
-// }
+// New data structure for efficient operations. 
+const roomToSockets = new Map<string, Set<WebSocket>>();
+const socketToRoom = new Map<WebSocket, string>();
 
 
 wss.on("connection", (socket)=>{
@@ -22,10 +13,14 @@ wss.on("connection", (socket)=>{
         const parsedMessage = JSON.parse(message);
 
         if(parsedMessage.type === "create-join"){
-            allSockets.push({
-                socket: socket,
-                room: parsedMessage.payload.roomId
-            })
+            // Adding the new socket to socket list with its room id. 
+            const roomId = parsedMessage.payload.roomId;
+            socketToRoom.set(socket, roomId);
+
+            // Adding roomId to the rooms list with the socket connected to it. 
+            // As only here we are creating the room so no need to check if it exist or not. 
+            roomToSockets.set(roomId, new Set<WebSocket>);
+            roomToSockets.get(roomId)?.add(socket);
 
             socket.send(JSON.stringify({
                 type: "ROOM_JOINED",
@@ -37,15 +32,19 @@ wss.on("connection", (socket)=>{
         }
 
         if(parsedMessage.type === "join"){
-            // get the roomId, look for it in all sockets, if found send ok response and add it into all sockets if not send an not ok response. 
             let found = false;
-            for(let i = 0; i < allSockets.length; i++){
-                if(allSockets[i]?.room === parsedMessage.payload.roomId){
-                    found = true;
-                    break;
-                }
+            console.log(parsedMessage);
+            // Checking in rooms map, does any such room exist?
+            if(roomToSockets.has(parsedMessage.payload.roomId)){
+                found=true;
+                console.log("Found.")
             }
+
+            // If yes, add the socket in the socket map (this-socket, this-room) and in the room map (this-room, these-sockets)
             if(found){
+                socketToRoom.set(socket, parsedMessage.payload.roomId);
+                roomToSockets.get(parsedMessage.payload.roomId)?.add(socket);
+
                 socket.send(JSON.stringify({
                     type: "ROOM_JOINED",
                     status: "OK",
@@ -54,6 +53,7 @@ wss.on("connection", (socket)=>{
                     }
                 }))
             }else{
+                console.log("Not found")
                 socket.send(JSON.stringify({
                     type: "ROOM_NOT_JOINED",
                     status: "NOT_OK"
@@ -62,19 +62,7 @@ wss.on("connection", (socket)=>{
         }
 
         if(parsedMessage.type === "chat"){
-            let currentRoom = null;
-            for(let i = 0; i < allSockets.length; i++){
-                if(allSockets[i]?.socket === socket){
-                    currentRoom = allSockets[i]?.room;
-                    console.log(currentRoom);
-                }
-            }
-
-            for(let i = 0; i < allSockets.length; i++){
-                if(allSockets[i]?.room === currentRoom){
-                    allSockets[i]?.socket.send(parsedMessage.payload.message)
-                }
-            }
+            console.log("Chat message received:", parsedMessage.payload.message);
         }
     })
 })
