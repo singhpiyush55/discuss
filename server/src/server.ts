@@ -29,6 +29,11 @@ wss.on("connection", (socket)=>{
                     roomId: parsedMessage.payload.roomId
                 }
             }));
+
+
+            // Debug logs.
+            console.log("Room Id : ", roomId);
+            console.log("Sockets : ", roomToSockets.get(roomId)?.size)
         }
 
         if(parsedMessage.type === "join"){
@@ -52,6 +57,9 @@ wss.on("connection", (socket)=>{
                         roomId: parsedMessage.payload.roomId
                     }
                 }))
+            // Debug logs.
+                console.log("Room Id : ", parsedMessage.payload.roomId);
+                console.log("Sockets : ", roomToSockets.get(parsedMessage.payload.roomId)?.size)                
             }else{
                 console.log("Not found")
                 socket.send(JSON.stringify({
@@ -62,7 +70,42 @@ wss.on("connection", (socket)=>{
         }
 
         if(parsedMessage.type === "chat"){
-            console.log("Chat message received:", parsedMessage.payload.message);
+            // Get the socket, look for its room id. Get all the sockets in that room. And broadcast the message to all those sockets. 
+            const roomId = socketToRoom.get(socket);
+
+            // @ts-ignore -> It says roomId can be undefined. 
+            // here sockets variable contains SET of sockets in that room. 
+            const sockets = roomToSockets.get(roomId);
+
+            // Send the message to every socket. 
+            // @ts-ignore
+            for(const s of sockets){
+                s.send(JSON.stringify({
+                    type: "chat",
+                    payload: {
+                        message: parsedMessage.payload.message
+                    }
+                }))
+            }
         }
+    })
+
+    socket.on("close", (close)=>{
+        console.log("Socket closed", close)
+
+        // Remove it room that room.
+        const roomId = socketToRoom.get(socket);
+        if(!roomId) return;
+
+        socketToRoom.delete(socket);
+        roomToSockets.get(roomId)?.delete(socket);
+
+        // If that room has no other socket, delete the room also.
+        if(roomToSockets.get(roomId)?.size === 0){
+            roomToSockets.delete(roomId)
+        }
+            // Debug logs.
+                console.log("Room Id : ", roomId);
+                console.log("Sockets : ", roomToSockets.get(roomId)?.size)    
     })
 })

@@ -1,4 +1,4 @@
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState, useLayoutEffect  } from "react";
 
 type ChatRoomProps = {
     roomId: string | number | null;
@@ -9,26 +9,43 @@ type ChatRoomProps = {
 
 function ChatRoom({roomId, onClickBack, socket} :ChatRoomProps) {
     const ws = socket;
+    const [message, setMessage] = useState<string[]>([]);
+
     const inputRef = useRef<HTMLInputElement | null>(null);
+    const bottomRef = useRef<HTMLDivElement | null>(null);
+
 
     // add this handler inside ChatRoom
     const handleSend = () => {
-    if (!ws || ws.readyState !== WebSocket.OPEN || !inputRef.current) return;
+        if (!ws || ws.readyState !== WebSocket.OPEN || !inputRef.current) return;
 
-    const message = inputRef.current.value.trim();
-    if (message === "") return;
+        const message = inputRef.current.value.trim();
+        if (message === "") return;
 
-    ws.send(
-        JSON.stringify({
-        type: "chat",
-        payload: {
-            message
-        }
-        })
-    );
+        ws.send(
+            JSON.stringify({
+                type: "chat",
+                payload: {
+                    message
+                }
+            })
+        );
 
-    inputRef.current.value = "";
+        inputRef.current.value = "";
     };
+
+    useEffect(()=>{
+        if(!ws) return; 
+        ws.onmessage = (e) => {
+            const parsedMessage = JSON.parse(e.data);
+            setMessage(message => [...message, parsedMessage.payload.message]);
+            console.log(message);
+        }
+    }, [ws])
+
+    useLayoutEffect(() => {
+        bottomRef.current?.scrollIntoView({ behavior: "smooth" });
+    }, [message]);
 
 
     return(
@@ -38,7 +55,10 @@ function ChatRoom({roomId, onClickBack, socket} :ChatRoomProps) {
             <div
                 className="border-3 border-grey-900 rounded-lg flex items-center gap-3 p-2"
             >
-            <button onClick={()=>{onClickBack()}}>
+            <button onClick={()=>{
+                ws?.close(1000, "User left the room")
+                onClickBack()
+            }}>
                 <img
                 src="/assets/back.svg"
                 className="h-10 w-10"
@@ -52,9 +72,30 @@ function ChatRoom({roomId, onClickBack, socket} :ChatRoomProps) {
             </div>
 
 
-            <div className="flex-1 overflow-y-auto p-2">
-                {}
+            <div className="flex-1 overflow-y-auto p-2 space-y-2 chat-scroll">
+            {message.map((m, i) => (
+                <div key={i} className="flex">
+                    <div
+                        className="
+                        bg-gray-200
+                        text-black
+                        px-3
+                        py-2
+                        rounded-lg
+                        max-w-[70%]
+                        w-fit
+                        break-words
+                        text-sm
+                        "
+                    >
+                        {m}
+                    </div>
+                </div>
+            ))}
+            <div ref={bottomRef} />
             </div>
+
+
 
             <div className="flex items-center gap-2 mt-2">
                 <input
