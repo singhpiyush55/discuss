@@ -8,7 +8,16 @@ const PORT = process.env.PORT;
 const app = express();
 const server = http.createServer(app);
 
-const wss = new WebSocketServer({ server, path: '/ws' });
+const wss = new WebSocketServer( { noServer: true } );
+server.on("upgrade", (req, socket, head) => {
+  if (req.url === "/ws") {
+    wss.handleUpgrade(req, socket, head, (ws) => {
+      wss.emit("connection", ws, req);
+    });
+  } else {
+    socket.destroy();
+  }
+});
 // HTTP routes
 app.get('/', (req, res) => {
   res.send('Hello over HTTP!')
