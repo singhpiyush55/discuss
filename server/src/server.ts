@@ -1,6 +1,17 @@
 import { WebSocketServer, WebSocket } from "ws";
+import dotenv from "dotenv";
+import http from "http";
 
-const wss = new WebSocketServer({port: 8080});
+dotenv.config();
+const PORT = process.env.PORT;
+
+const server = http.createServer();
+
+const wss = new WebSocketServer({ server });
+
+server.listen(PORT, () => {
+  console.log(`WebSocket server running on port ${PORT}`);
+});
 
 // New data structure for efficient operations. 
 const roomToSockets = new Map<string, Set<WebSocket>>();
@@ -104,8 +115,8 @@ wss.on("connection", (socket)=>{
         if(roomToSockets.get(roomId)?.size === 0){
             roomToSockets.delete(roomId)
         }
-            // Debug logs.
-                console.log("Room Id : ", roomId);
-                console.log("Sockets : ", roomToSockets.get(roomId)?.size)    
+        // Debug logs.
+        console.log("Room Id : ", roomId);
+        console.log("Sockets : ", roomToSockets.get(roomId)?.size)    
     })
 })
