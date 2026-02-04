@@ -91,16 +91,20 @@ function None(){
 }
 function EnterValid(){
     return(
-        <>
+        <div
+            className="text-yellow-300 text-sm mt-2 mx-8 px-4 py-2 rounded-lg bg-yellow-900/30 border border-yellow-700"
+        >
             <p>Enter a room id</p>
-        </>
+        </div>
     )
 }
 function NoRoomExist(){
     return(
-        <>
+        <div
+            className="text-red-400 text-sm mt-2 mx-8 px-4 py-2 rounded-lg bg-red-900/30 border border-red-700"
+        >
             <p>No such room exist.</p>
-        </>
+        </div>
     )
 }
 

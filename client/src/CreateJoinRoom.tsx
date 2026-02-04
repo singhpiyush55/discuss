@@ -1,3 +1,5 @@
+
+
 type Prop = {
     onClickCreate: (page: "home" | "joinroom" | "chatroom", roomId: string, wsType: WebSocket) => void;
     onClickJoin: () => void;
@@ -6,9 +8,17 @@ type Prop = {
 function createRoom(
   onClickCreate: (page: "home" | "joinroom" | "chatroom", roomId: string, wsType: WebSocket) => void
 ) {
-  return () => { // ✅ return a function for onClick
+  return () => { 
     const roomId = Date.now().toString(36);
-    const ws = new WebSocket("ws://localhost:8080");
+    const ws = new WebSocket('wss://discuss-on28.onrender.com/ws');
+
+    ws.onerror = (err) => {
+      console.error("WebSocket error:", err);
+    };
+
+    ws.onclose = (event) => {
+      console.log("WebSocket closed:", event.code, event.reason);
+    };
 
     ws.onopen = () => {
       ws.send(
@@ -28,7 +38,6 @@ function createRoom(
       ) {
         console.log("Room created:", parsedMessage.payload.roomId);
 
-        // ✅ navigate ONLY after success
         onClickCreate("chatroom", parsedMessage.payload.roomId, ws);
       }
     };
