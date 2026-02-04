@@ -1,14 +1,18 @@
 import { WebSocketServer, WebSocket } from "ws";
 import dotenv from "dotenv";
 import http from "http";
+import express from "express";
 
 dotenv.config();
 const PORT = process.env.PORT;
+const app = express();
+const server = http.createServer(app);
 
-const server = http.createServer();
-
-const wss = new WebSocketServer({ server });
-
+const wss = new WebSocketServer({ server, path: '/ws' });
+// HTTP routes
+app.get('/', (req, res) => {
+  res.send('Hello over HTTP!')
+})
 server.listen(PORT, () => {
   console.log(`WebSocket server running on port ${PORT}`);
 });
