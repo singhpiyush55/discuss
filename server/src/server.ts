@@ -4,27 +4,16 @@ import http from "http";
 import express from "express";
 
 dotenv.config();
-const PORT = process.env.PORT;
 const app = express();
 const server = http.createServer(app);
+const PORT = process.env.PORT || 10000;
 
-const wss = new WebSocketServer( { noServer: true } );
-server.on("upgrade", (req, socket, head) => {
-  if (req.url === "/ws") {
-    wss.handleUpgrade(req, socket, head, (ws) => {
-      wss.emit("connection", ws, req);
-    });
-  } else {
-    socket.destroy();
-  }
-});
+const wss = new WebSocketServer( { server, path: '/ws' } );
+
 // HTTP routes
 app.get('/', (req, res) => {
   res.send('Hello over HTTP!')
 })
-server.listen(PORT, () => {
-  console.log(`WebSocket server running on port ${PORT}`);
-});
 
 // New data structure for efficient operations. 
 const roomToSockets = new Map<string, Set<WebSocket>>();
@@ -133,3 +122,7 @@ wss.on("connection", (socket)=>{
         console.log("Sockets : ", roomToSockets.get(roomId)?.size)    
     })
 })
+
+server.listen(PORT, () => {
+  console.log(`WebSocket server running on port ${PORT}`);
+});
